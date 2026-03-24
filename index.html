@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuk's Home Office — 3D View</title>
+<style>
+  body { margin: 0; overflow: hidden; font-family: -apple-system, system-ui, sans-serif; background: #111; }
+  #info { position: absolute; top: 12px; left: 12px; color: #fff; font-size: 13px; background: rgba(0,0,0,0.6); padding: 8px 14px; border-radius: 8px; z-index: 10; pointer-events: none; }
+  #info h3 { margin: 0 0 4px; font-size: 15px; }
+  #info p { margin: 2px 0; opacity: 0.8; }
+  #controls { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 12px; background: rgba(0,0,0,0.5); padding: 6px 16px; border-radius: 6px; z-index: 10; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="info">
+  <h3>Manuk's Home Office</h3>
+  <p>260 × 450 cm • 270 cm ceiling</p>
+  <p>Science-backed minimalist layout</p>
+</div>
+<div id="controls">🖱 Drag to rotate • Scroll to zoom • Right-drag to pan</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf0ede8);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 50);
+camera.position.set(-2.0, 1.6, 0);
+camera.lookAt(0, 1.2, -1);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.0, -0.5);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.5;
+controls.maxDistance = 8;
+controls.maxPolarAngle = Math.PI * 0.85;
+controls.update();
+
+const wallWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf5f2ed, roughness: 0.9 });
+const accentWallMat = new THREE.MeshStandardMaterial({ color: 0x7b8fa1, roughness: 0.85 });
+const floorMat = new THREE.MeshStandardMaterial({ color: 0xd4c4a8, roughness: 0.7 });
+const ceilingMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
+const deskMat = new THREE.MeshStandardMaterial({ color: 0xb8a88a, roughness: 0.5, metalness: 0.05 });
+const chairMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.6, metalness: 0.1 });
+const macMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.2, metalness: 0.8 });
+const plantGreenMat = new THREE.MeshStandardMaterial({ color: 0x4a7a4a, roughness: 0.8 });
+const plantPotMat = new THREE.MeshStandardMaterial({ color: 0xe8ddd0, roughness: 0.7 });
+const windowGlassMat = new THREE.MeshStandardMaterial({ color: 0x87ceeb, roughness: 0.1, metalness: 0.1, transparent: true, opacity: 0.3 });
+const windowFrameMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.4, metalness: 0.3 });
+const doorMat = new THREE.MeshStandardMaterial({ color: 0xf0ece6, roughness: 0.7 });
+const ledPanelMat = new THREE.MeshStandardMaterial({ color: 0xfff8e7, roughness: 0.3, emissive: 0xfff0d0, emissiveIntensity: 0.5 });
+const ledStripMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffd700, emissiveIntensity: 0.6 });
+const screenMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1, metalness: 0.5, emissive: 0x3366aa, emissiveIntensity: 0.3 });
+const barMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3, metalness: 0.6 });
+
+const RW = 2.6, RL = 4.5, RH = 2.7, T = 0.12;
+
+// Floor & Ceiling
+const floor = new THREE.Mesh(new THREE.BoxGeometry(RW, 0.05, RL), floorMat);
+floor.position.set(0, 0, -RL/2); floor.receiveShadow = true; scene.add(floor);
+const ceil = new THREE.Mesh(new THREE.BoxGeometry(RW, 0.05, RL), ceilingMat);
+ceil.position.set(0, RH, -RL/2); scene.add(ceil);
+
+// Back wall (accent)
+const bw = new THREE.Mesh(new THREE.BoxGeometry(RW, RH, T), accentWallMat);
+bw.position.set(0, RH/2, -RL); bw.receiveShadow = true; scene.add(bw);
+
+// Front wall with door opening
+const fwL = new THREE.Mesh(new THREE.BoxGeometry((RW-0.95)/2, RH, T), wallWhiteMat);
+fwL.position.set(-(RW/2-(RW-0.95)/4), RH/2, 0); scene.add(fwL);
+const fwR = new THREE.Mesh(new THREE.BoxGeometry((RW-0.95)/2, RH, T), wallWhiteMat);
+fwR.position.set((RW/2-(RW-0.95)/4), RH/2, 0); scene.add(fwR);
+const fwT = new THREE.Mesh(new THREE.BoxGeometry(0.95, RH-2.1, T), wallWhiteMat);
+fwT.position.set(0, 2.1+(RH-2.1)/2, 0); scene.add(fwT);
+
+// Side walls
+const lw = new THREE.Mesh(new THREE.BoxGeometry(T, RH, RL), wallWhiteMat);
+lw.position.set(-RW/2, RH/2, -RL/2); lw.receiveShadow = true; scene.add(lw);
+const rw = new THREE.Mesh(new THREE.BoxGeometry(T, RH, RL), wallWhiteMat);
+rw.position.set(RW/2, RH/2, -RL/2); rw.receiveShadow = true; scene.add(rw);
+
+// Window
+const winW = 1.3, winH = 1.2, winY = 0.9;
+scene.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(winW, winH), windowGlassMat), {position: new THREE.Vector3(0, winY+winH/2, -RL+T/2+0.01)}));
+[[winW+0.08,0.04,0,winY-0.02],[winW+0.08,0.04,0,winY+winH+0.02],[0.04,winH+0.08,-winW/2-0.02,winY+winH/2],[0.04,winH+0.08,winW/2+0.02,winY+winH/2],[0.04,winH,0,winY+winH/2],[winW,0.04,0,winY+winH/2]].forEach(([w,h,x,y])=>{
+  const f=new THREE.Mesh(new THREE.BoxGeometry(w,h,0.03),windowFrameMat); f.position.set(x,y,-RL+T/2+0.01); scene.add(f);
+});
+
+// Door
+const dr=new THREE.Mesh(new THREE.BoxGeometry(0.95,2.1,0.05),doorMat); dr.position.set(0,1.05,0.03); scene.add(dr);
+const hd=new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,0.08,8),macMat); hd.rotation.x=Math.PI/2; hd.position.set(0.35,1.0,0.06); scene.add(hd);
+
+// Desk
+const dG=new THREE.Group(), dW=1.5, dD=0.7, dH=0.74;
+const dt=new THREE.Mesh(new THREE.BoxGeometry(dD,0.03,dW),deskMat); dt.position.y=dH; dt.castShadow=true; dt.receiveShadow=true; dG.add(dt);
+[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([a,b])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(0.04,dH,0.04),deskMat);l.position.set(a*(dD/2-0.04),dH/2,b*(dW/2-0.04));l.castShadow=true;dG.add(l)});
+dG.position.set(RW/2-dD/2-0.05,0,-(0.8+dW/2)); scene.add(dG);
+
+// MacBook
+const mG=new THREE.Group();
+mG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.22,0.01,0.22),macMat),{position:new THREE.Vector3(0,0,0)}));
+mG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.04,0.12,0.04),macMat),{position:new THREE.Vector3(0,0.06,0)}));
+const mb=new THREE.Mesh(new THREE.BoxGeometry(0.36,0.015,0.25),macMat); mb.position.set(0,0.13,0); mb.rotation.x=-0.1; mG.add(mb);
+const ms=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.24,0.008),screenMat); ms.position.set(0,0.25,-0.11); ms.rotation.x=-0.25; mG.add(ms);
+mG.position.set(RW/2-dD/2-0.05,dH+0.015,-(0.8+dW/2)); scene.add(mG);
+
+// Chair
+const cG=new THREE.Group();
+cG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.48,0.06,0.48),chairMat),{position:new THREE.Vector3(0,0.45,0)}));
+const br=new THREE.Mesh(new THREE.BoxGeometry(0.46,0.55,0.04),chairMat); br.position.set(0,0.72,-0.22); br.rotation.x=0.1; cG.add(br);
+cG.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,0.35,8),chairMat),{position:new THREE.Vector3(0,0.2,0)}));
+for(let i=0;i<5;i++){const a=(i/5)*Math.PI*2,arm=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.03,0.25),chairMat);arm.rotation.y=a;arm.position.set(Math.sin(a)*0.12,0.03,Math.cos(a)*0.12);cG.add(arm);const w=new THREE.Mesh(new THREE.SphereGeometry(0.025,8,8),chairMat);w.position.set(Math.sin(a)*0.24,0.025,Math.cos(a)*0.24);cG.add(w)}
+[-1,1].forEach(s=>{cG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.04,0.03,0.22),chairMat),{position:new THREE.Vector3(s*0.24,0.62,-0.05)}));cG.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.03,0.15,0.03),chairMat),{position:new THREE.Vector3(s*0.24,0.54,-0.1)}))});
+cG.position.set(RW/2-dD-0.45,0,-(0.8+dW/2)); cG.rotation.y=Math.PI/2; scene.add(cG);
+
+// Snake plant
+const pG=new THREE.Group();
+pG.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.08,0.2,12),plantPotMat),{position:new THREE.Vector3(0,0.1,0)}));
+for(let i=0;i<7;i++){const h=0.35+Math.random()*0.25,lf=new THREE.Mesh(new THREE.BoxGeometry(0.03,h,0.008),plantGreenMat),a=(i/7)*Math.PI*2;lf.position.set(Math.sin(a)*0.03,0.2+h/2,Math.cos(a)*0.03);lf.rotation.x=Math.sin(a)*0.08;lf.rotation.z=Math.cos(a)*0.08;pG.add(lf)}
+pG.position.set(-RW/2+0.25,0,-RL+0.25); scene.add(pG);
+
+// LED panel & strip
+scene.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.6,0.02,0.6),ledPanelMat),{position:new THREE.Vector3(0,RH-0.03,-RL/2)}));
+scene.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(0.02,0.02,dW*0.9),ledStripMat),{position:new THREE.Vector3(RW/2-0.02,dH+0.3,-(0.8+dW/2))}));
+
+// ScreenBar
+const sb=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.45,8),barMat); sb.rotation.z=Math.PI/2; sb.position.set(RW/2-dD/2-0.05,dH+0.48,-(0.8+dW/2)-0.12); scene.add(sb);
+
+// Lights
+scene.add(new THREE.AmbientLight(0xfff5e6,0.4));
+const sun=new THREE.DirectionalLight(0xfff8e7,1.8); sun.position.set(0,3,-RL-2); sun.target.position.set(0,0,-RL/2); sun.castShadow=true; sun.shadow.mapSize.set(1024,1024); scene.add(sun); scene.add(sun.target);
+const cl=new THREE.PointLight(0xfff0d0,1.2,6); cl.position.set(0,RH-0.1,-RL/2); cl.castShadow=true; scene.add(cl);
+scene.add(Object.assign(new THREE.PointLight(0xffd700,0.4,2),{position:new THREE.Vector3(RW/2-0.1,dH+0.3,-(0.8+dW/2))}));
+scene.add(Object.assign(new THREE.PointLight(0xffeedd,0.3,5),{position:new THREE.Vector3(-1,2,0.5)}));
+
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}
+animate();
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight)});
+</script>
+</body>
+</html>
