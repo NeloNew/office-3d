@@ -346,15 +346,25 @@ scene.add(floor);
 const bw = m(new THREE.BoxGeometry(RW, RH, T), accentWallMat, 0, RH/2, -RL);
 bw.receiveShadow = true; scene.add(bw);
 
-// Front wall with door opening
-const fdw = (RW - 0.95) / 2;
-scene.add(m(new THREE.BoxGeometry(fdw, RH, T), wallWhiteMat, -(RW/2 - fdw/2), RH/2, 0));
-scene.add(m(new THREE.BoxGeometry(fdw, RH, T), wallWhiteMat, (RW/2 - fdw/2), RH/2, 0));
-scene.add(m(new THREE.BoxGeometry(0.95, RH - 2.1, T), wallWhiteMat, 0, 2.1 + (RH - 2.1)/2, 0));
+// Front wall (short, solid — no door here)
+const fw = m(new THREE.BoxGeometry(RW, RH, T), wallWhiteMat, 0, RH/2, 0);
+scene.add(fw);
 
-// Side walls
-const lw = m(new THREE.BoxGeometry(T, RH, RL), wallWhiteMat, -RW/2, RH/2, -RL/2);
-lw.receiveShadow = true; scene.add(lw);
+// Left wall (long, 450cm side) — with door opening centered
+// Door is 95cm wide, centered on 450cm wall → opening at Z = -RL/2
+const doorGap = 0.95;
+const leftWallSegLen = (RL - doorGap) / 2;
+// Segment closer to front (Z=0 to Z=-leftWallSegLen)
+const lwFront = m(new THREE.BoxGeometry(T, RH, leftWallSegLen), wallWhiteMat, -RW/2, RH/2, -leftWallSegLen/2);
+lwFront.receiveShadow = true; scene.add(lwFront);
+// Segment closer to window (Z=-(leftWallSegLen+doorGap) to Z=-RL)
+const lwBack = m(new THREE.BoxGeometry(T, RH, leftWallSegLen), wallWhiteMat, -RW/2, RH/2, -(RL - leftWallSegLen/2));
+lwBack.receiveShadow = true; scene.add(lwBack);
+// Top piece above door
+const lwTop = m(new THREE.BoxGeometry(T, RH - 2.1, doorGap), wallWhiteMat, -RW/2, 2.1 + (RH - 2.1)/2, -RL/2);
+scene.add(lwTop);
+
+// Right wall (long, solid)
 const rw = m(new THREE.BoxGeometry(T, RH, RL), wallWhiteMat, RW/2, RH/2, -RL/2);
 rw.receiveShadow = true; scene.add(rw);
 
@@ -387,23 +397,24 @@ frameParts.forEach(([fw, fh, fx, fy]) => {
 const sill = m(new THREE.BoxGeometry(winW + 0.12, 0.025, 0.08), windowFrameMat, 0, winY - 0.01, winZ + 0.04);
 scene.add(sill);
 
-// ─── DOOR ─────────────────────────────────────────────────────────
+// ─── DOOR (on left long wall, centered at Z = -RL/2) ──────────────
 
-const door = m(new THREE.BoxGeometry(0.93, 2.08, 0.045), doorMat, 0, 1.04, 0.025);
+// Door slab — on the left wall (X = -RW/2), oriented along Z axis
+const door = m(new THREE.BoxGeometry(0.045, 2.08, 0.93), doorMat, -RW/2 + 0.025, 1.04, -RL/2);
 door.castShadow = true;
 scene.add(door);
 
-// Door panel detail
+// Door panel detail (on interior face, facing +X into room)
 const panelInset = new THREE.MeshStandardMaterial({ color: 0xe8e4de, roughness: 0.7 });
-scene.add(m(new THREE.BoxGeometry(0.36, 0.7, 0.005), panelInset, 0, 0.55, 0.05));
-scene.add(m(new THREE.BoxGeometry(0.36, 0.7, 0.005), panelInset, 0, 1.5, 0.05));
+scene.add(m(new THREE.BoxGeometry(0.005, 0.7, 0.36), panelInset, -RW/2 + 0.05, 0.55, -RL/2));
+scene.add(m(new THREE.BoxGeometry(0.005, 0.7, 0.36), panelInset, -RW/2 + 0.05, 1.5, -RL/2));
 
-// Handle
-const handle = m(new THREE.CylinderGeometry(0.012, 0.012, 0.1, 12), doorHandleMat, 0.35, 1.0, 0.06);
-handle.rotation.x = Math.PI / 2;
+// Handle (on interior side, facing into room)
+const handle = m(new THREE.CylinderGeometry(0.012, 0.012, 0.1, 12), doorHandleMat, -RW/2 + 0.06, 1.0, -RL/2 + 0.35);
+handle.rotation.z = Math.PI / 2;
 scene.add(handle);
 // Handle plate
-scene.add(m(new THREE.BoxGeometry(0.04, 0.12, 0.008), doorHandleMat, 0.35, 1.0, 0.05));
+scene.add(m(new THREE.BoxGeometry(0.008, 0.12, 0.04), doorHandleMat, -RW/2 + 0.05, 1.0, -RL/2 + 0.35));
 
 // ─── DESK ─────────────────────────────────────────────────────────
 
@@ -830,8 +841,8 @@ function createLabel(text, position, rotation = [0, 0, 0]) {
 
 // Room dimensions
 dimGroup.add(createLabel('260 cm', [0, 0.15, 0.15]));        // Width (front)
-dimGroup.add(createLabel('450 cm', [-RW/2 - 0.2, 0.15, -RL/2], [0, Math.PI/2, 0])); // Length (left)
-dimGroup.add(createLabel('270 cm', [-RW/2 - 0.2, RH/2, 0]));  // Height (corner)
+dimGroup.add(createLabel('450 cm', [-RW/2 - 0.2, 0.15, -RL/2])); // Length (left wall)
+dimGroup.add(createLabel('270 cm', [RW/2 + 0.2, RH/2, -RL/2]));  // Height (right corner)
 dimGroup.add(createLabel('150×70 cm', [RW/2 - dD/2 - 0.05, dH + 0.15, -(0.8 + dW/2)])); // Desk
 dimGroup.add(createLabel('130×120 cm', [0, winY + winH + 0.15, -RL + 0.1])); // Window
 
@@ -882,8 +893,8 @@ const views = {
     maxPolar: Math.PI * 0.48
   },
   walkthrough: {
-    pos: new THREE.Vector3(0, 1.65, 1.8),
-    target: new THREE.Vector3(0, 1.3, -2.0),
+    pos: new THREE.Vector3(-RW/2 + 0.3, 1.65, -RL/2),
+    target: new THREE.Vector3(0.5, 1.2, -RL/2),
     maxPolar: Math.PI * 0.85
   }
 };
